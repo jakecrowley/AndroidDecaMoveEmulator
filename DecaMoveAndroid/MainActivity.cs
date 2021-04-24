@@ -139,7 +139,7 @@ namespace DecaMoveAndroid
                                         status.Text = "Status: Connected";
                                     });
 
-                                    var battmsg = Encoding.ASCII.GetBytes($"{Battery.ChargeLevel}");
+                                    var battmsg = Encoding.ASCII.GetBytes($"{(int)(Battery.ChargeLevel * 1000)}");
                                     udpClient.Send(battmsg, battmsg.Length);
                                 }
 
@@ -218,7 +218,7 @@ namespace DecaMoveAndroid
         {
             if (udpClient != null)
             {
-                var msg = Encoding.ASCII.GetBytes($"{e.ChargeLevel}");
+                var msg = Encoding.ASCII.GetBytes($"{(int)(e.ChargeLevel * 1000)}");
                 udpClient.Send(msg, msg.Length);
             }
         }

@@ -9,6 +9,7 @@ using System.Text;
 using System.Net.Sockets;
 using System.Net;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DecaMoveEmulator
 {
@@ -151,30 +152,38 @@ namespace DecaMoveEmulator
 
 		public static void ProcessPacket(string[] msg)
         {
-			status = 3;
-
-			if (msg.Length == 1)
+			try
 			{
-				if(msg[0] == "ping")
-                {
-					var sendmsg = Encoding.ASCII.GetBytes("pong");
-					udpClient.Send(sendmsg, sendmsg.Length, sender);
-					return;
-				}
-				else if(msg[0] == "stop")
-                {
-					status = 1;
-					return;
-				}
+				status = 3;
 
-				ushort battlvl = (ushort)(double.Parse(msg[0]) * 1000);
-				byte[] batt = BitConverter.GetBytes(battlvl);
-				processPacket.Invoke(decaMoveChannel, new object[] { new byte[] { 0x62, 0x62, batt[0], batt[1] } });
+				if (msg.Length <= 1)
+				{
+					if (msg[0] == "ping")
+					{
+						var sendmsg = Encoding.ASCII.GetBytes("pong");
+						udpClient.Send(sendmsg, sendmsg.Length, sender);
+						return;
+					}
+					else if (msg[0] == "stop")
+					{
+						status = 1;
+						return;
+					}
+
+					ushort battlvl = ushort.Parse(msg[0]);
+					byte[] batt = BitConverter.GetBytes(battlvl);
+					processPacket.Invoke(decaMoveChannel, new object[] { new byte[] { 0x62, 0x62, batt[0], batt[1] } });
+				}
+				else
+				{
+					Quaternion q = new Quaternion(float.Parse(msg[0]), float.Parse(msg[1]), float.Parse(msg[2]), float.Parse(msg[3]));
+					processPacket.Invoke(decaMoveChannel, new object[] { EncodeQuaternion(q) });
+				}
 			}
-			else
+			catch (Exception e)
 			{
-				Quaternion q = new Quaternion(float.Parse(msg[0]), float.Parse(msg[1]), float.Parse(msg[2]), float.Parse(msg[3]));
-				processPacket.Invoke(decaMoveChannel, new object[] { EncodeQuaternion(q) });
+				Console.WriteLine("[ERR] Error processing packet: " + String.Join(",", msg.Select(p => p.ToString())));
+				Console.WriteLine(e.StackTrace);
 			}
 		}
 
