@@ -10,7 +10,7 @@ A WIP DecaMove emulator for Android devices.
 
 1. Install DecaHub.
 
-2. Clone the github repository and build from source or download the zip archive from Releases and extract all files.
+2. Clone the github repository and build from source OR download the zip archive from Releases and extract all files.
 
 3. Move APK to phone and install.
 
