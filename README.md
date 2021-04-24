@@ -4,7 +4,7 @@ A WIP DecaMove emulator for Android devices.
 ## WIP Features
 
 - Haptic Feedback support
-- Automatic Server IP Detection via Multicast
+- ~~Automatic Server IP Detection via Multicast~~ Done!
 
 ## Installation
 
@@ -18,7 +18,7 @@ A WIP DecaMove emulator for Android devices.
 
 5. Run Android App
 
-6. Enter PC's local IP address into the IP Address text field.
+6. Wait 5-10 seconds for the app to automatically retrieve the host IP address, if it does not appear, enter IP address manually.
 
 7. Click 'Start'
 
