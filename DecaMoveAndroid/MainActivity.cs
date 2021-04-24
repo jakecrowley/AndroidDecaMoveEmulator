@@ -14,6 +14,7 @@ using System.Text;
 using System.Threading;
 using Android.Widget;
 using System.Numerics;
+using System.Globalization;
 
 namespace DecaMoveAndroid
 {
@@ -26,6 +27,8 @@ namespace DecaMoveAndroid
         private DateTime lastPing = DateTime.Now;
 
         private bool Running = false;
+
+        private static CultureInfo enUS = new CultureInfo("en-US");
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -210,7 +213,7 @@ namespace DecaMoveAndroid
         {
             var o = e.Reading.Orientation;
 
-            var msg = Encoding.ASCII.GetBytes($"{o.X},{o.Y},{o.Z},{o.W}");
+            var msg = Encoding.ASCII.GetBytes($"{o.X.ToString(enUS)},{o.Y.ToString(enUS)},{o.Z.ToString(enUS)},{o.W.ToString(enUS)}");
             udpClient.Send(msg, msg.Length);
         }
 
