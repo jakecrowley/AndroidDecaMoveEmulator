@@ -4,6 +4,7 @@ A WIP DecaMove emulator for Android devices.
 ## WIP Features
 
 - Haptic Feedback support
+- Automatic Server IP Detection via Multicast
 
 ## Installation
 
