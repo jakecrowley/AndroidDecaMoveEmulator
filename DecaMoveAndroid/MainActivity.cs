@@ -155,11 +155,15 @@ namespace DecaMoveAndroid
                     Timer connCheckTimer = new Timer(connectionCheck);
                     connCheckTimer.Change(0, 5000);
 
+                    DeviceDisplay.KeepScreenOn = true;
+
                     OrientationSensor.Start(SensorSpeed.Fastest);
                     view.Text = "Stop";
                 }
                 else
                 {
+                    DeviceDisplay.KeepScreenOn = false;
+
                     Running = false;
                     OrientationSensor.Stop();
                     view.Text = "Start";
