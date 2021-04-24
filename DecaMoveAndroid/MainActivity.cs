@@ -211,10 +211,13 @@ namespace DecaMoveAndroid
 
         private void OrientationSensor_ReadingChanged(object sender, OrientationSensorChangedEventArgs e)
         {
-            var o = e.Reading.Orientation;
+            if (udpClient != null)
+            {
+                var o = e.Reading.Orientation;
 
-            var msg = Encoding.ASCII.GetBytes($"{o.X.ToString(enUS)},{o.Y.ToString(enUS)},{o.Z.ToString(enUS)},{o.W.ToString(enUS)}");
-            udpClient.Send(msg, msg.Length);
+                var msg = Encoding.ASCII.GetBytes($"{o.X.ToString(enUS)},{o.Y.ToString(enUS)},{o.Z.ToString(enUS)},{o.W.ToString(enUS)}");
+                udpClient.Send(msg, msg.Length);
+            }
         }
 
         private void Battery_BatteryInfoChanged(object sender, BatteryInfoChangedEventArgs e)
