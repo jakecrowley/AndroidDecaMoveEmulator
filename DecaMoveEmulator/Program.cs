@@ -8,6 +8,7 @@ using System.Numerics;
 using System.Text;
 using System.Net.Sockets;
 using System.Net;
+using System.Collections.Generic;
 
 namespace DecaMoveEmulator
 {
@@ -167,30 +168,42 @@ namespace DecaMoveEmulator
 
 		public static void SendMulticastPacket()
         {
-			UdpClient udpclient = new UdpClient();
-			IPAddress multicastaddress = IPAddress.Parse("224.0.0.69");
-			udpclient.JoinMulticastGroup(multicastaddress, IPAddress.Any);
-			IPEndPoint remoteep = new IPEndPoint(multicastaddress, 4445);
+			List<Socket> mcastSockets = new List<Socket>();
+			IPAddress mcastAddress = IPAddress.Parse("224.0.0.69");
+			var endPoint = new IPEndPoint(mcastAddress, 11000);
+			var buffer = Encoding.ASCII.GetBytes("DecaMoveAndroidEmulator");
+
+			IPAddress[] localIPs = GetIPAddresses();
+			foreach (IPAddress ip in localIPs)
+			{
+				Socket mcastSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+				IPEndPoint IPlocal = new IPEndPoint(ip, 0);
+				mcastSocket.Bind(IPlocal);
+				MulticastOption mcastOption = new MulticastOption(mcastAddress, ip);
+				mcastSocket.SetSocketOption(SocketOptionLevel.IP, SocketOptionName.AddMembership, mcastOption);
+				mcastSockets.Add(mcastSocket);
+			}
 
 			var t = new Timer((o) =>
 			{
-				var buffer = Encoding.ASCII.GetBytes("dmea," + GetLocalIPAddress());
-				udpclient.Send(buffer, buffer.Length, remoteep);
+				foreach(Socket mcastSocket in mcastSockets)
+					mcastSocket.SendTo(buffer, endPoint);
 			});
 			t.Change(0, 5000);
 		}
 
-		public static string GetLocalIPAddress()
+		static IPAddress[] GetIPAddresses()
 		{
+			List<IPAddress> ips = new List<IPAddress>();
 			var host = Dns.GetHostEntry(Dns.GetHostName());
 			foreach (var ip in host.AddressList)
 			{
 				if (ip.AddressFamily == AddressFamily.InterNetwork)
 				{
-					return ip.ToString();
+					ips.Add(ip);
 				}
 			}
-			throw new Exception("No network adapters with an IPv4 address in the system!");
+			return ips.ToArray();
 		}
 
 		public static byte[] EncodeQuaternion(Quaternion q)

@@ -41,6 +41,8 @@ namespace DecaMoveAndroid
 
             OrientationSensor.ReadingChanged += OrientationSensor_ReadingChanged;
             Battery.BatteryInfoChanged += Battery_BatteryInfoChanged;
+
+            MulticastListener();
         }
 
         public override bool OnCreateOptionsMenu(IMenu menu)
@@ -58,6 +60,46 @@ namespace DecaMoveAndroid
             }
 
             return base.OnOptionsItemSelected(item);
+        }
+
+        private void MulticastListener()
+        {
+            UdpClient mcastClient = new UdpClient();
+            IPAddress multicastaddress = IPAddress.Parse("224.0.0.69");
+            IPEndPoint remoteep = new IPEndPoint(IPAddress.Any, 11000);
+            mcastClient.Client.Bind(remoteep);
+            mcastClient.JoinMulticastGroup(multicastaddress);
+
+            new Thread(() =>
+            {
+                while (true)
+                {
+                    byte[] resp = mcastClient.Receive(ref remoteep);
+                    var str = Encoding.ASCII.GetString(resp);
+                    if(str == "DecaMoveAndroidEmulator")
+                    {
+                        AppCompatEditText ipaddr = FindViewById<AppCompatEditText>(Resource.Id.textInputEditText1);
+                        RunOnUiThread(() =>
+                        {
+                            ipaddr.Text = remoteep.Address.ToString();
+                        });
+                        break;
+                    }
+                }
+            }).Start();
+        }
+
+        static IPAddress GetLocalIPAddress()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip;
+                }
+            }
+            return null;
         }
 
         private void FabOnClick(object sender, EventArgs eventArgs)
