@@ -106,36 +106,43 @@ namespace DecaMoveEmulator
 			while (decaMoveChannel == null || processPacket == null)
 				Thread.Sleep(50);
 
-			processPacket.Invoke(decaMoveChannel, new object[] { verpkt });
-			processPacket.Invoke(decaMoveChannel, new object[] { onpkt });
-
-			status = 1;
-
-			byte[] data = new byte[1024];
-			IPEndPoint ipep = new IPEndPoint(IPAddress.Any, 9050);
-			udpClient = new UdpClient(ipep);
-
-			Console.WriteLine("[DME] Waiting for a client...");
-			sender = new IPEndPoint(IPAddress.Any, 0);
-			data = udpClient.Receive(ref sender);
-
-			ProcessPacket(Encoding.ASCII.GetString(data, 0, data.Length).Split(','));
-
-			status = 2;
-
-			data = Encoding.ASCII.GetBytes("connected");
-			udpClient.Send(data, data.Length, sender);
-
-			string[] msg;
-
 			new Thread(() =>
 			{
+				byte[] data = new byte[1024];
+				IPEndPoint ipep = new IPEndPoint(IPAddress.Any, 9050);
+				udpClient = new UdpClient(ipep);
+
 				while (true)
 				{
-					data = udpClient.Receive(ref sender);
-					msg = Encoding.ASCII.GetString(data, 0, data.Length).Split(',');
+					processPacket.Invoke(decaMoveChannel, new object[] { verpkt });
+					processPacket.Invoke(decaMoveChannel, new object[] { onpkt });
 
-					ProcessPacket(msg);
+					status = 1;
+
+					Console.WriteLine("[DME] Waiting for a client...");
+
+					while (Encoding.ASCII.GetString(data) != "connected")
+					{
+						sender = new IPEndPoint(IPAddress.Any, 0);
+						data = udpClient.Receive(ref sender);
+					}
+
+					status = 2;
+
+					var cnctmsg = Encoding.ASCII.GetBytes("connected");
+					udpClient.Send(cnctmsg, cnctmsg.Length, sender);
+
+					Console.WriteLine("[DME] Client connected ");
+
+					string[] msg;
+
+					while (status > 1)
+					{
+						data = udpClient.Receive(ref sender);
+						msg = Encoding.ASCII.GetString(data, 0, data.Length).Split(',');
+
+						ProcessPacket(msg);
+					}
 				}
 			}).Start();
 
@@ -152,6 +159,11 @@ namespace DecaMoveEmulator
                 {
 					var sendmsg = Encoding.ASCII.GetBytes("pong");
 					udpClient.Send(sendmsg, sendmsg.Length, sender);
+					return;
+				}
+				else if(msg[0] == "stop")
+                {
+					status = 1;
 					return;
 				}
 

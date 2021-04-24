@@ -116,7 +116,7 @@ namespace DecaMoveAndroid
                     udpClient = new UdpClient(9050);
                     udpClient.Connect(ipep);
 
-                    var msg = Encoding.ASCII.GetBytes($"{Battery.ChargeLevel}");
+                    var msg = Encoding.ASCII.GetBytes($"connected");
                     udpClient.Send(msg, msg.Length);
 
                     IPEndPoint udpsender = new IPEndPoint(IPAddress.Any, 0);
@@ -132,10 +132,16 @@ namespace DecaMoveAndroid
 
                             if (msg == "connected" || msg == "pong")
                             {
-                                RunOnUiThread(() =>
+                                if (msg == "connected")
                                 {
-                                    status.Text = "Status: Connected";
-                                });
+                                    RunOnUiThread(() =>
+                                    {
+                                        status.Text = "Status: Connected";
+                                    });
+
+                                    var battmsg = Encoding.ASCII.GetBytes($"{Battery.ChargeLevel}");
+                                    udpClient.Send(battmsg, battmsg.Length);
+                                }
 
                                 Running = true;
                                 lastPing = DateTime.Now;
@@ -158,6 +164,9 @@ namespace DecaMoveAndroid
                     OrientationSensor.Stop();
                     view.Text = "Start";
                     status.Text = "Status: Not Running";
+
+                    var msg = Encoding.ASCII.GetBytes("stop");
+                    udpClient.Send(msg, msg.Length);
                 }
             } 
             catch(Exception e)
@@ -168,23 +177,26 @@ namespace DecaMoveAndroid
 
         private void connectionCheck(object o)
         {
-            if (udpClient != null && Running)
+            if (udpClient != null)
             {
                 var msg = Encoding.ASCII.GetBytes("ping");
                 udpClient.Send(msg, msg.Length);
 
-                if ((DateTime.Now - lastPing).TotalSeconds > 10)
+                if (Running)
                 {
-                    RunOnUiThread(() =>
+                    if ((DateTime.Now - lastPing).TotalSeconds > 10)
                     {
-                        TextView status = FindViewById<TextView>(Resource.Id.status);
-                        status.Text = "Status: Lost Connection";
-                    });
+                        RunOnUiThread(() =>
+                        {
+                            TextView status = FindViewById<TextView>(Resource.Id.status);
+                            status.Text = "Status: Lost Connection";
+                        });
 
-                    for (int i = 0; i < 10; i++)
-                    {
-                        Vibration.Vibrate();
-                        Thread.Sleep(100);
+                        for (int i = 0; i < 10; i++)
+                        {
+                            Vibration.Vibrate();
+                            Thread.Sleep(100);
+                        }
                     }
                 }
             }
