@@ -10,6 +10,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Collections.Generic;
 using System.Linq;
+using System.Globalization;
 
 namespace DecaMoveEmulator
 {
@@ -46,6 +47,8 @@ namespace DecaMoveEmulator
 
 		static UdpClient udpClient;
 		static IPEndPoint sender;
+
+		private static CultureInfo enUS = new CultureInfo("en-US");
 
 		static void Main(string[] args)
         {
@@ -176,7 +179,7 @@ namespace DecaMoveEmulator
 				}
 				else
 				{
-					Quaternion q = new Quaternion(float.Parse(msg[0]), float.Parse(msg[1]), float.Parse(msg[2]), float.Parse(msg[3]));
+					Quaternion q = new Quaternion(float.Parse(msg[0], enUS), float.Parse(msg[1], enUS), float.Parse(msg[2], enUS), float.Parse(msg[3], enUS));
 					processPacket.Invoke(decaMoveChannel, new object[] { EncodeQuaternion(q) });
 				}
 			}
