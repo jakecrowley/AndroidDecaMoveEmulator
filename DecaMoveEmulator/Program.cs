@@ -29,10 +29,10 @@ namespace DecaMoveEmulator
 		public static void MyPostfix(object __instance, string text)
         {
 			Console.WriteLine("[Serial Packet] " + text);
-			if (Program.udpClient != null)
+			if (Program.udpClient != null && Program.sender != null)
 			{
 				var bytes = Encoding.ASCII.GetBytes(text);
-				Program.udpClient.Send(bytes, bytes.Length);
+				Program.udpClient.Send(bytes, bytes.Length, Program.sender);
 			}
         }
     }
@@ -49,7 +49,7 @@ namespace DecaMoveEmulator
 		static MethodInfo processPacket;
 
 		public static UdpClient udpClient;
-		static IPEndPoint sender;
+		public static IPEndPoint sender;
 
 		static void Main(string[] args)
         {
