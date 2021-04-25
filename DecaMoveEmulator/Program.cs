@@ -29,6 +29,11 @@ namespace DecaMoveEmulator
 		public static void MyPostfix(object __instance, string text)
         {
 			Console.WriteLine("[Serial Packet] " + text);
+			if (Program.udpClient != null)
+			{
+				var bytes = Encoding.ASCII.GetBytes(text);
+				Program.udpClient.Send(bytes, bytes.Length);
+			}
         }
     }
 
@@ -43,9 +48,7 @@ namespace DecaMoveEmulator
 		static dynamic decaMoveChannel;
 		static MethodInfo processPacket;
 
-		static DateTime lastPacket;
-
-		static UdpClient udpClient;
+		public static UdpClient udpClient;
 		static IPEndPoint sender;
 
 		static void Main(string[] args)
@@ -85,7 +88,7 @@ namespace DecaMoveEmulator
 				PropertyInfo DecaMoveChannel = dmstype.GetProperty("DecaMoveChannel", BindingFlags.NonPublic | BindingFlags.Instance);
 				decaMoveChannel = DecaMoveChannel.GetValue(decaMoveService);
 
-				var harmony = new Harmony("com.example.patch");
+				var harmony = new Harmony("com.jakecrowley.decapatch");
 
 				MethodInfo getState = dmctype.GetMethod("get_State", BindingFlags.Instance | BindingFlags.Public);
 				var mPostfix = typeof(StatePatch).GetMethod("MyPostfix", BindingFlags.Static | BindingFlags.Public);
@@ -184,7 +187,7 @@ namespace DecaMoveEmulator
 			}
 			catch (Exception e)
 			{
-				Console.WriteLine("[ERR] Error processing packet: " + String.Join(",", msg.Select(p => p.ToString())));
+				Console.WriteLine("[ERR] Error processing packet: " + string.Join(",", msg.Select(p => p.ToString())));
 				Console.WriteLine(e.StackTrace);
 			}
 		}
