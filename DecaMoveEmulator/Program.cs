@@ -11,6 +11,7 @@ using System.Net;
 using System.Collections.Generic;
 using System.Linq;
 using System.Globalization;
+using System.Windows.Forms;
 
 namespace DecaMoveEmulator
 {
@@ -72,38 +73,65 @@ namespace DecaMoveEmulator
 		
 		static void PatchDMS()
         {
-			new Thread(() =>
+			var t = new Thread(() =>
 			{
-				var currDir = Directory.GetCurrentDirectory();
-				Directory.SetCurrentDirectory(@"C:\Program Files\Megadodo Games\DecaHub");
+				if (Directory.Exists(@"C:\Program Files\Megadodo Games\DecaHub"))
+					Directory.SetCurrentDirectory(@"C:\Program Files\Megadodo Games\DecaHub");
+				else
+                {
+                    using (var fbd = new FolderBrowserDialog())
+					{
+						fbd.Description = "Installation not at standard location, Select DecaHub Folder";
+						DialogResult result = fbd.ShowDialog();
+						if (result == DialogResult.OK)
+						{
+							Directory.SetCurrentDirectory(fbd.SelectedPath);
+						}
+						else
+                        {
+							Environment.Exit(1);
+                        }
+					}
+                }
 
-				var dms2asm = Assembly.LoadFrom("DecaMoveService2.exe");
+                //Load DecaMoveService2.exe into memory
+                var dms2asm = Assembly.LoadFrom("DecaMoveService2.exe");
 				var dmstype = dms2asm.GetType("DecaMoveService2.DecaMoveService");
 				var dmctype = dms2asm.GetType("DecaMoveService2.DecaMoveChannel");
+
+				//Create instance of DecaMoveService
 				dynamic decaMoveService = Activator.CreateInstance(dmstype, new object[] { });
 
+				//Invoke OnStart method to manually start service
 				MethodInfo StartService = dmstype.GetMethod("OnStart", BindingFlags.NonPublic | BindingFlags.Instance);
 				StartService.Invoke(decaMoveService, new object[] { new string[] { } });
 
+				//Get DecaMoveChannel instance from DecaMoveService instance
 				PropertyInfo DecaMoveChannel = dmstype.GetProperty("DecaMoveChannel", BindingFlags.NonPublic | BindingFlags.Instance);
 				decaMoveChannel = DecaMoveChannel.GetValue(decaMoveService);
 
+				//Create new dynamic patch
 				var harmony = new Harmony("com.jakecrowley.decapatch");
 
+				//Override getter of the State variable 
 				MethodInfo getState = dmctype.GetMethod("get_State", BindingFlags.Instance | BindingFlags.Public);
 				var mPostfix = typeof(StatePatch).GetMethod("MyPostfix", BindingFlags.Static | BindingFlags.Public);
 				harmony.Patch(getState, new HarmonyMethod(mPostfix), new HarmonyMethod(mPostfix));
 
+				//Override SerialWrite method to send data over udp socket instead
 				MethodInfo write = dmctype.GetMethod("Write", BindingFlags.NonPublic | BindingFlags.Instance);
 				var mPrefixWrite = typeof(SerialWritePatch).GetMethod("MyPrefix", BindingFlags.Static | BindingFlags.Public);
 				var mPostfixWrite = typeof(SerialWritePatch).GetMethod("MyPostfix", BindingFlags.Static | BindingFlags.Public);
 				harmony.Patch(write, new HarmonyMethod(mPrefixWrite), new HarmonyMethod(mPostfixWrite));
 
+				//invoke InstallStuff to install SteamVR bindings
 				MethodInfo installStuff = dmctype.GetMethod("InstallStuff", BindingFlags.NonPublic | BindingFlags.Instance);
 				installStuff.Invoke(decaMoveChannel, new object[] { true });
 
 				processPacket = dmctype.GetMethod("ProcessPacket", BindingFlags.NonPublic | BindingFlags.Instance);
-			}).Start();
+			});
+			t.SetApartmentState(ApartmentState.STA);
+			t.Start();
 		}
 
 
@@ -210,7 +238,7 @@ namespace DecaMoveEmulator
 				mcastSockets.Add(mcastSocket);
 			}
 
-			var t = new Timer((o) =>
+			var t = new System.Threading.Timer((o) =>
 			{
 				foreach(Socket mcastSocket in mcastSockets)
 					mcastSocket.SendTo(buffer, endPoint);
