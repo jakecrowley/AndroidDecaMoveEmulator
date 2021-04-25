@@ -48,10 +48,9 @@ namespace DecaMoveEmulator
 		static UdpClient udpClient;
 		static IPEndPoint sender;
 
-		private static CultureInfo enUS = new CultureInfo("en-US");
-
 		static void Main(string[] args)
         {
+			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 			KillExistingService();
 			PatchDMS();
 			SendMulticastPacket();
@@ -179,7 +178,7 @@ namespace DecaMoveEmulator
 				}
 				else
 				{
-					Quaternion q = new Quaternion(float.Parse(msg[0], enUS), float.Parse(msg[1], enUS), float.Parse(msg[2], enUS), float.Parse(msg[3], enUS));
+					Quaternion q = new Quaternion(float.Parse(msg[0]), float.Parse(msg[1]), float.Parse(msg[2]), float.Parse(msg[3]));
 					processPacket.Invoke(decaMoveChannel, new object[] { EncodeQuaternion(q) });
 				}
 			}
