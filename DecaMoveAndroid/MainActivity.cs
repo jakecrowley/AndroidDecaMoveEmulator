@@ -147,7 +147,61 @@ namespace DecaMoveAndroid
                                 }
 
                                 Running = true;
-                                lastPing = DateTime.Now;
+                                lastPing = DateTime.Now;          
+                            }
+                            //Try/catch haptics in case something goes wrong
+                            //Haptic format is "H{0} {1} {2}" 
+                            //Haptic stop is "H C {1} {2}"
+                            //Haptic without stop is "H {1} {2}"
+                            //H C 1 1
+                            //H 1 1
+                            int spacesOffset = 0;
+                            try
+                            {
+                                if (msg[0] == 'H')
+                                {
+                                    if (msg[2] == 'C')
+                                    {
+                                        //stop haptics
+                                        Vibration.Cancel();
+                                        spacesOffset = 1;
+                                    }
+                                    int effect = int.Parse(msg.Split(' ')[2+spacesOffset]);
+                                    int reps = int.Parse(msg.Split(' ')[1+spacesOffset]);
+                                    switch (effect)
+                                    {
+                                        case 1:
+                                            //single click
+                                            Vibration.Vibrate(250);
+                                            break;
+                                        case 10:
+                                            //double click
+                                            Vibration.Vibrate(250);
+                                            Thread.Sleep(500);
+                                            Vibration.Vibrate(250);
+                                            break;
+                                        case 24:
+                                            //calibration?
+                                            Vibration.Vibrate(1000);
+                                            break;
+                                        case 14:
+                                            //buzz
+                                            for (int i = 0; i < 10; i++)
+                                            {
+                                                Vibration.Vibrate(25);
+                                                Thread.Sleep(50);
+                                            }
+                                            break;
+                                        default:
+                                            //uh oh, we have no clue what this should be doing? Maybe a new version of DecaHub?
+                                            Console.Error.WriteLine("Haptic error: Unknown haptic effect {}", effect);
+                                            break;
+                                    }
+                                }
+                            }
+                            catch(Exception e)
+                            {
+                                Console.Error.WriteLine("Haptic error: {}", e.StackTrace);
                             }
                         }
                     });
