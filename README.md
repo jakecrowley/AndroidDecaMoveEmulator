@@ -5,7 +5,7 @@ A WIP DecaMove emulator for Android devices.
 
 - ~~Haptic Feedback support~~ Done!
 - ~~Automatic Server IP Detection via Multicast~~ Done!
-- Add support for non standard DecaHub installation directories
+- ~~Add support for non standard DecaHub installation directories~~ Done!
 - iOS support?????
 
 ## Installation
