@@ -1,4 +1,7 @@
 # Android DecaMove Emulator
+
+OFFICIAL DECA ANDROID APP IS OUT. This app does NOT work with DecaHub Beta v0.3.0
+
 A WIP DecaMove emulator for Android devices. 
 
 ## WIP Features
